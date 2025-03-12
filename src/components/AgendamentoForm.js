@@ -6,16 +6,58 @@ const AgendamentoForm = () => {
     const [cnpj, setCnpj] = useState('');
     const [telefone, setTelefone] = useState('');
     const [data, setData] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [erros, setErros] = useState({});
+
+    const validarEmail = (email) => {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(email);
+    };
+
+    const validarCNPJ = (cnpj) => {
+        return cnpj.length === 14 && /^\d+$/.test(cnpj);
+    };
+
+    const validarTelefone = (telefone) => {
+        return telefone.length >= 10 && /^\d+$/.test(telefone);
+    };
+
+    const validarData = (data) => {
+        const dataSelecionada = new Date(data);
+        const hoje = new Date();
+        return dataSelecionada > hoje;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (loading) return;
 
-        setLoading(true);
+        const novosErros = {};
+
+        if (!nome || nome.length < 2) {
+            novosErros.nome = "O nome deve ter pelo menos 2 caracteres.";
+        }
+
+        if (!validarEmail(email)) {
+            novosErros.email = "Por favor, insira um email válido.";
+        }
+
+        if (!validarCNPJ(cnpj)) {
+            novosErros.cnpj = "O CNPJ deve ter 14 dígitos.";
+        }
+
+        if (!validarTelefone(telefone)) {
+            novosErros.telefone = "O telefone deve ter pelo menos 10 dígitos.";
+        }
+
+        if (!validarData(data)) {
+            novosErros.data = "A data deve ser futura.";
+        }
+
+        if (Object.keys(novosErros).length > 0) {
+            setErros(novosErros);
+            return;
+        }
+
         const agendamento = { nome, email, cnpj, telefone, data };
-
-        console.log('Dados Enviados:', agendamento);
 
         try {
             const response = await fetch('http://localhost:5000/agendar', {
@@ -34,8 +76,6 @@ const AgendamentoForm = () => {
         } catch (error) {
             console.error('Erro ao agendar:', error);
             alert(error.message || 'Erro ao agendar. Tente novamente mais tarde.');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -50,6 +90,7 @@ const AgendamentoForm = () => {
                     onChange={(e) => setNome(e.target.value)}
                     required
                 />
+                {erros.nome && <p style={{ color: 'red' }}>{erros.nome}</p>}
             </div>
             <div>
                 <label>Email:</label>
@@ -59,6 +100,7 @@ const AgendamentoForm = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                 />
+                {erros.email && <p style={{ color: 'red' }}>{erros.email}</p>}
             </div>
             <div>
                 <label>CNPJ:</label>
@@ -68,6 +110,7 @@ const AgendamentoForm = () => {
                     onChange={(e) => setCnpj(e.target.value)}
                     required
                 />
+                {erros.cnpj && <p style={{ color: 'red' }}>{erros.cnpj}</p>}
             </div>
             <div>
                 <label>Telefone:</label>
@@ -77,6 +120,7 @@ const AgendamentoForm = () => {
                     onChange={(e) => setTelefone(e.target.value)}
                     required
                 />
+                {erros.telefone && <p style={{ color: 'red' }}>{erros.telefone}</p>}
             </div>
             <div>
                 <label>Data e Horário:</label>
@@ -86,10 +130,9 @@ const AgendamentoForm = () => {
                     onChange={(e) => setData(e.target.value)}
                     required
                 />
+                {erros.data && <p style={{ color: 'red' }}>{erros.data}</p>}
             </div>
-            <button type="submit" disabled={loading}>
-                {loading ? 'Agendando...' : 'Agendar'}
-            </button>
+            <button type="submit">Agendar</button>
         </form>
     );
 };
